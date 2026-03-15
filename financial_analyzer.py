@@ -3,10 +3,10 @@ import re
 def extract_financials(text):
 
     data = {
-        "revenue": None,
-        "profit": None,
-        "debt": None,
-        "assets": None
+        "revenue": 0,
+        "profit": 0,
+        "debt": 0,
+        "assets": 0
     }
 
     revenue = re.search(r"Revenue\s*[:\-]?\s*([\d,]+)", text, re.IGNORECASE)
@@ -15,15 +15,15 @@ def extract_financials(text):
     assets = re.search(r"Assets\s*[:\-]?\s*([\d,]+)", text, re.IGNORECASE)
 
     if revenue:
-        data["revenue"] = revenue.group(1)
+        data["revenue"] = int(revenue.group(1).replace(",", ""))
 
     if profit:
-        data["profit"] = profit.group(1)
+        data["profit"] = int(profit.group(1).replace(",", ""))
 
     if debt:
-        data["debt"] = debt.group(1)
+        data["debt"] = int(debt.group(1).replace(",", ""))
 
     if assets:
-        data["assets"] = assets.group(1)
+        data["assets"] = int(assets.group(1).replace(",", ""))
 
     return data
