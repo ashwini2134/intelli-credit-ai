@@ -3,4 +3,5 @@ pandas
 numpy
 PyPDF2
 pdfplumber
+python-docx
 gunicorn
