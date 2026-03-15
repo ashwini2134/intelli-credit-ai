@@ -9,8 +9,15 @@ from financial_analyzer import extract_financials
 
 app = Flask(__name__)
 
+# -------------------------------
+# UPLOAD FOLDER SETUP
+# -------------------------------
+
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# create uploads folder if not exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
 # -------------------------------
@@ -60,37 +67,49 @@ def dashboard():
 @app.route("/analyze", methods=["POST"])
 def analyze():
 
-    file = request.files["document"]
+    try:
 
-    path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-    file.save(path)
+        if "document" not in request.files:
+            return "No document uploaded", 400
 
-    # Extract text from document
-    text = extract_text(path)
+        file = request.files["document"]
 
-    # Extract financial data
-    financials = extract_financials(text)
+        if file.filename == "":
+            return "No selected file", 400
 
-    # Calculate risk
-    score, level = calculate_risk(text, financials)
+        # save file
+        path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+        file.save(path)
 
-    borrower = "Tata"
+        # extract text
+        text = extract_text(path)
 
-    research = "Risk Level: MEDIUM. Some legal and financial developments found in web search."
+        # financial analysis
+        financials = extract_financials(text)
 
-    # Generate CAM report
-    cam_file = generate_cam(score, level, borrower, financials, research)
+        # risk calculation
+        score, level = calculate_risk(text, financials)
 
-    # Save history
-    save_analysis(borrower, score, level)
+        borrower = "Tata"
 
-    return render_template(
-        "result.html",
-        score=score,
-        level=level,
-        financials=financials,
-        cam_file=cam_file
-    )
+        research = "Risk Level: MEDIUM. Some legal and financial developments found in web search."
+
+        # CAM report
+        cam_file = generate_cam(score, level, borrower, financials, research)
+
+        # save history
+        save_analysis(borrower, score, level)
+
+        return render_template(
+            "result.html",
+            score=score,
+            level=level,
+            financials=financials,
+            cam_file=cam_file
+        )
+
+    except Exception as e:
+        return f"Error occurred: {str(e)}"
 
 
 # -------------------------------
@@ -100,18 +119,23 @@ def analyze():
 @app.route("/download_cam")
 def download_cam():
 
-    financials = {
-        "Revenue": "₹1,80,00,000",
-        "Profit": "₹32,00,000",
-        "Total Debt": "₹90,00,000",
-        "Total Assets": "₹2,10,00,000"
-    }
+    try:
 
-    research = "Risk Level: MEDIUM. Several legal cases and financial developments were identified."
+        financials = {
+            "Revenue": "₹1,80,00,000",
+            "Profit": "₹32,00,000",
+            "Total Debt": "₹90,00,000",
+            "Total Assets": "₹2,10,00,000"
+        }
 
-    file = generate_cam(90, "MEDIUM", "Tata", financials, research)
+        research = "Risk Level: MEDIUM. Several legal cases and financial developments were identified."
 
-    return send_file(file, as_attachment=True)
+        file = generate_cam(90, "MEDIUM", "Tata", financials, research)
+
+        return send_file(file, as_attachment=True)
+
+    except Exception as e:
+        return f"Error generating CAM: {str(e)}"
 
 
 # -------------------------------
@@ -121,25 +145,38 @@ def download_cam():
 @app.route("/history")
 def history():
 
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
+    try:
 
-    cursor.execute("SELECT * FROM history")
+        conn = sqlite3.connect("database.db")
+        cursor = conn.cursor()
 
-    rows = cursor.fetchall()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS history (
+                company TEXT,
+                score INTEGER,
+                level TEXT
+            )
+        """)
 
-    history_data = []
+        cursor.execute("SELECT * FROM history")
 
-    for r in rows:
-        history_data.append({
-            "company": r[0],
-            "score": r[1],
-            "level": r[2]
-        })
+        rows = cursor.fetchall()
 
-    conn.close()
+        history_data = []
 
-    return render_template("history.html", history=history_data)
+        for r in rows:
+            history_data.append({
+                "company": r[0],
+                "score": r[1],
+                "level": r[2]
+            })
+
+        conn.close()
+
+        return render_template("history.html", history=history_data)
+
+    except Exception as e:
+        return f"Error loading history: {str(e)}"
 
 
 # -------------------------------
