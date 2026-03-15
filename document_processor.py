@@ -1,16 +1,17 @@
-import PyPDF2
+import pdfplumber
+
 
 def extract_text(file_path):
+
     text = ""
 
-    try:
-        with open(file_path, "rb") as file:
-            reader = PyPDF2.PdfReader(file)
+    with pdfplumber.open(file_path) as pdf:
 
-            for page in reader.pages:
-                text += page.extract_text()
+        for page in pdf.pages:
 
-    except:
-        text = "Could not extract text"
+            content = page.extract_text()
+
+            if content:
+                text += content
 
     return text
