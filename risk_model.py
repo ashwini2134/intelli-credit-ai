@@ -2,41 +2,24 @@ def calculate_risk(text, financials):
 
     score = 50
 
-    revenue = financials.get("revenue")
-    profit = financials.get("profit")
-    debt = financials.get("debt")
-    assets = financials.get("assets")
+    revenue = financials.get("revenue", 0)
+    profit = financials.get("profit", 0)
+    debt = financials.get("debt", 0)
+    assets = financials.get("assets", 1)
 
-    try:
-        if revenue:
-            revenue = int(revenue.replace(",", ""))
-        if profit:
-            profit = int(profit.replace(",", ""))
-        if debt:
-            debt = int(debt.replace(",", ""))
-        if assets:
-            assets = int(assets.replace(",", ""))
-    except:
-        pass
-
-    # Profit increases score
-    if profit and profit > 0:
+    if profit > 0:
         score += 15
 
-    # Revenue strength
-    if revenue and revenue > 1000000:
+    if revenue > 1000000:
         score += 10
 
-    # Debt ratio
-    if debt and assets:
-        ratio = debt / assets
+    debt_ratio = debt / assets
 
-        if ratio > 0.7:
-            score -= 20
-        elif ratio > 0.4:
-            score -= 10
+    if debt_ratio > 0.7:
+        score -= 20
+    elif debt_ratio > 0.4:
+        score -= 10
 
-    # Risk level
     if score >= 70:
         level = "Low Risk"
     elif score >= 50:
